@@ -114,7 +114,8 @@ while True:
         host="192.168.100.1",
         user="ailand",
         password="etarob",
-        database="handwagen"
+        database="handwagen",
+        connection_timeout = 3,
       )
       print(loop_t, ": successfully connected to mysql")
       init_sql = True
