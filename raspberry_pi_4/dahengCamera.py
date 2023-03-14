@@ -6,7 +6,7 @@ from func_timeout import func_timeout, FunctionTimedOut
 from commonFunctions import sql_initialize, ftp_initialize, get_all_value, set_value, get_value
 
 # User inputs
-debug = True
+debug = False
 sql_enable = True
 ftp_enable = True
 
@@ -55,7 +55,7 @@ while True:
 			cams[0].LineSelector.set(1)
 			cams[0].LineMode.set(1)
 			cams[0].LineInverter.set(False)
-			cams[0].LineSource.set(1)
+			cams[0].LineSource.set(5)
 			cams[0].SensorShutterMode.set(2)
 			
 			cam_stream_on(cams)
