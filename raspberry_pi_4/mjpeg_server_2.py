@@ -12,6 +12,9 @@ from picamera2 import Picamera2
 from picamera2.encoders import MJPEGEncoder
 from picamera2.outputs import FileOutput
 from libcamera import controls
+from commonFunctions import sql_initialize, set_value, get_value
+import traceback
+import time
 
 PAGE = """\
 <html>
@@ -81,16 +84,50 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
+sql_inited = False
+cam_inited = False
+streaming = False
 
-picam2 = Picamera2()
-picam2.set_controls({"AfMode": controls.AfModeEnum.Continuous})
-picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
-output = StreamingOutput()
-picam2.start_recording(MJPEGEncoder(), FileOutput(output))
+while True:
+    if not sql_inited:
+        
+        sql_inited, mydb = sql_initialize()
+                
+    if not cam_inited and sql_inited:
+        
+        try:
+            picam2 = Picamera2()
+            picam2.set_controls({"AfMode": controls.AfModeEnum.Continuous})
+            picam2.configure(picam2.create_video_configuration(main={"size": (640, 480)}))
+            output = StreamingOutput()
+            picam2.start_recording(MJPEGEncoder(), FileOutput(output))
+            
+            cam_inited = True
+            sql_inited = set_value(mydb, sql_inited, 'status', 'cam_2', '1')
+        
+        except:
+            print(traceback.format_exc())
+            cam_inited = False
+            sql_inited = set_value(mydb, sql_inited, 'status', 'cam_2', '0')
 
-try:
-    address = ('', 8000)
-    server = StreamingServer(address, StreamingHandler)
-    server.serve_forever()
-finally:
-    picam2.stop_recording()
+    if cam_inited and sql_inited:
+        
+        if not streaming:
+            address = ('', 8000)
+            server = StreamingServer(address, StreamingHandler)
+            streaming = True
+            
+        if streaming:
+            try:
+                
+                server.serve_forever()
+                
+            except:
+                
+                print(traceback.format_exc())
+                streaming = False
+                cam_inited = False
+                sql_inited = set_value(mydb, sql_inited, 'status', 'cam_2', '0')
+            
+            finally:
+                picam2.stop_recording()

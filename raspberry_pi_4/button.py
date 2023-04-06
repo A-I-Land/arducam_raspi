@@ -22,28 +22,32 @@ arducam = [0, 0, 0, 0]
 	
 while True:
 	
-	loop_t = datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')[:-3]
-	
-	# Initialize the sql
-	if not sql_inited:
-		sql_inited, mydb = sql_initialize()
-	
-	# Get value from sql
-	if sql_inited:	
-		sql_inited, control, arducam, daheng = get_all_value(mydb, sql_inited)
+	try:
+		loop_t = datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')[:-3]
 		
-	# Set soft_capture to 0 if both camera had captured
-	if daheng[3]:
-		sql_inited = set_value(mydb, sql_inited, 'control', 'soft_capture', '0')
-		sql_inited = set_value(mydb, sql_inited, 'arducam_camera', 'capture', '0')
-		sql_inited = set_value(mydb, sql_inited, 'daheng_camera', 'capture', '0')
+		# Initialize the sql
+		if not sql_inited:
+			sql_inited, mydb = sql_initialize()
 		
-	# Detect button press		
-	if gpio.input(17) == gpio.LOW:
-		print(loop_t, ": button pressed")
-		if sql_inited:
-			sql_inited = set_value(mydb, sql_inited, 'control', 'hard_capture', '1')
-	else:
-		if sql_inited: 
-		  sql_inited = set_value(mydb, sql_inited, 'control', 'hard_capture', '0')
+		# Get value from sql
+		if sql_inited:	
+			sql_inited, control, arducam, daheng = get_all_value(mydb, sql_inited)
+			
+		# Set soft_capture to 0 if both camera had captured
+		if daheng[3]:
+			sql_inited = set_value(mydb, sql_inited, 'control', 'soft_capture', '0')
+			sql_inited = set_value(mydb, sql_inited, 'arducam_camera', 'capture', '0')
+			sql_inited = set_value(mydb, sql_inited, 'daheng_camera', 'capture', '0')
+			
+		# Detect button press		
+		if gpio.input(17) == gpio.LOW:
+			print(loop_t, ": button pressed")
+			if sql_inited:
+				sql_inited = set_value(mydb, sql_inited, 'control', 'hard_capture', '1')
+		else:
+			if sql_inited: 
+			  sql_inited = set_value(mydb, sql_inited, 'control', 'hard_capture', '0')
+	
+	except:
+		print(traceback.format_exc())
 			  

@@ -4,7 +4,7 @@ from ftplib import FTP
 import traceback
 from func_timeout import func_timeout, FunctionTimedOut
 
-def sql_initialize(verbose=False):
+def sql_initialize(verbose=False, t_out=5):
 	'''
 	Connect to the sql server and return a cursor
 	
@@ -31,7 +31,7 @@ def sql_initialize(verbose=False):
 		user="ailand",
 		password="etarob",
 		database="handwagen",
-		connection_timeout = 1,
+		connection_timeout = t_out,
 		)
 		print(t, ": successfully connected to mysql")
 		sql_inited = True
@@ -49,7 +49,7 @@ def sql_initialize(verbose=False):
 		
 	return sql_inited, mydb
 
-def get_all_value(mydb, sql_inited, verbose=False):
+def get_all_value(mydb, sql_inited, verbose=True, t_out=5):
 	'''
 	Read the values from the sql server
 	
@@ -91,14 +91,14 @@ def get_all_value(mydb, sql_inited, verbose=False):
 		
 	try:
 		
-		control_result, arducam_result, daheng_result = func_timeout(1, _get_all_value, args=[mydb])
+		control_result, arducam_result, daheng_result = func_timeout(t_out, _get_all_value, args=[mydb])
 	
 	except:
 		
 		if verbose:
 			print(traceback.format_exc())
 		else:
-			print(t, ": unable to get value from mysql")
+			print(t, ": unable to get all value from mysql")
 
 		sql_inited = False
 		control_result = None
@@ -107,7 +107,7 @@ def get_all_value(mydb, sql_inited, verbose=False):
 			
 	return sql_inited, control_result, arducam_result, daheng_result
 
-def set_value(mydb, sql_inited, table, var_name, value, verbose=True):
+def set_value(mydb, sql_inited, table, var_name, value, verbose=True, t_out=5):
 	'''
 	Read the values from the sql server
 	
@@ -142,7 +142,7 @@ def set_value(mydb, sql_inited, table, var_name, value, verbose=True):
 		
 	try:
 		
-		func_timeout(1, _set_value, args=[mydb, table, var_name, value])
+		func_timeout(5, _set_value, args=[mydb, table, var_name, value])
 	
 	except:
 		
@@ -155,7 +155,7 @@ def set_value(mydb, sql_inited, table, var_name, value, verbose=True):
 	
 	return sql_inited
 	
-def get_value(mydb, sql_inited, table, var_name, verbose=True):
+def get_value(mydb, sql_inited, table, var_name, verbose=True, t_out=5):
 	'''
 	Read the values from the sql server
 	
@@ -193,21 +193,21 @@ def get_value(mydb, sql_inited, table, var_name, verbose=True):
 		
 	try:
 		
-		sql_var = func_timeout(1, _get_value, args=[mydb, table, var_name])
+		sql_var = func_timeout(t_out, _get_value, args=[mydb, table, var_name])
 	
 	except:
 		
 		if verbose:
 			print(traceback.format_exc())
 		else:
-			print(t, ": unable to set value in mysql")
+			print(t, ": unable to get value", var_name, " in mysql")
 
 		sql_var = None
 		sql_inited = False
 	
 	return sql_inited, sql_var
 	
-def ftp_initialize(verbose=False):
+def ftp_initialize(verbose=False, t_out=5):
 	'''
 	Initialize the sql server
 	
@@ -227,7 +227,7 @@ def ftp_initialize(verbose=False):
 	
 	try:
 		
-	  ftp = FTP('192.168.100.1', timeout=5)
+	  ftp = FTP('192.168.100.1', timeout=t_out)
 	  ftp.login('ailand', 'etarob')
 	  print(t, ": successfully connected to ftp server")
 	  ftp_inited = True

@@ -122,6 +122,7 @@ def activate_trigger(cams):
 def get_numpyImageBGR(cams):
     numpy_images = []
     for cam in cams:  # not understood yet why the i is necessary,
+        cam.data_stream[0].flush_queue()
         raw_image = cam.data_stream[0].get_image()  # Use the camera to capture a picture
         if raw_image is None:
             numpy_image_bgr = raw_image
