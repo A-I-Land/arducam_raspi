@@ -212,7 +212,9 @@ while True:
 					#flo2 = BytesIO(buffer_2)
 					#ftp.storbinary('STOR uncrop/' + image_name, flo2)
 					
-					ftp.storbinary('STOR daheng/' + image_name, flo1)		
+					ftp.storbinary('STOR daheng/' + image_name, flo1)
+					
+						
 					sql_inited = set_value(mydb, sql_inited, 'daheng_camera', 'capture', '1')
 					sql_inited = set_value(mydb, sql_inited, 'daheng_camera', 'log_info', '"' + log_info + '"')
 					print(loop_t, ": Done saving daheng image via ftp as", image_name)
@@ -227,6 +229,6 @@ while True:
 				
 					if debug:
 						print(traceback.format_exc())
-
+				
 	except:
 		print(traceback.format_exc())
