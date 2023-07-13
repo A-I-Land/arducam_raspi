@@ -1,9 +1,8 @@
-# Setup
-1. clone the repository with the following command
-```
-git clone https://github.com/A-I-Land/handwagon.git
-```
-2. put the *startArducam.sh* file in the root directory, e.g. /home/ailand
-3.  
+
+# Update Instruction
+## Raspberry Pi 4
+1. copy and paste the Handwagon folder 
+## Surface Go 3
+2. 
 
 # Troubleshooting
