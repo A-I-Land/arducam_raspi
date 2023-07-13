@@ -1,3 +1,7 @@
+'''
+Script on controlling the daheng camera
+'''
+
 from cameraSetup import *
 import traceback
 import cv2
@@ -195,8 +199,6 @@ while True:
 				bottom_crop = 58
 				
 				sql_inited, image_name = get_value(mydb, sql_inited, 'control', 'image_name')
-				
-				#uncrop = images[0]
 													
 				images[0] = images[0][top_crop:im_size[0]-bottom_crop,left_crop:im_size[1]-right_crop]
 
@@ -207,28 +209,27 @@ while True:
 				
 				log_info = 'Exposure: ' + str(cam_expo) + '; Gain: ' + str(cam_gain) + '; WB: ' + str(cam_red) + ' ' + str(cam_green) + ' ' + str(cam_blue)
 
-				try:
-					#retval_2, buffer_2 = cv2.imencode(".jpg", uncrop)
-					#flo2 = BytesIO(buffer_2)
-					#ftp.storbinary('STOR uncrop/' + image_name, flo2)
+				attempts = 0
+				while attempts < 3:
+					try:
+						ftp.storbinary('STOR daheng/' + image_name, flo1)
+						sql_inited = set_value(mydb, sql_inited, 'daheng_camera', 'capture', '1')
+						sql_inited = set_value(mydb, sql_inited, 'daheng_camera', 'log_info', '"' + log_info + '"')
+						print(loop_t, ": Done saving daheng image via ftp as", image_name)
+						print(log_info)
+					except:
+						attempts += 1
+						if attempts < 3:
+							print(loop_t, ": Attempt ", attempts, "failed, Retrying ...")
+							ftp_inited, ftp = ftp_initialize(True)
+						else:
+							print(loop_t, ": Unable to save daheng image via ftp, resort to local save")
+							cv2.imwrite("/home/ailand/Pictures/daheng/" + loop_t + ".jpg", images[0])
+							ftp_inited = False
+							sql_inited = set_value(mydb, sql_inited, 'daheng_camera', 'capture', '1')
 					
-					ftp.storbinary('STOR daheng/' + image_name, flo1)
-					
-						
-					sql_inited = set_value(mydb, sql_inited, 'daheng_camera', 'capture', '1')
-					sql_inited = set_value(mydb, sql_inited, 'daheng_camera', 'log_info', '"' + log_info + '"')
-					print(loop_t, ": Done saving daheng image via ftp as", image_name)
-					print(log_info)
-				
-				except:
-				
-					print(loop_t, ": Unable to save daheng image via ftp, resort to local save")
-					cv2.imwrite("/home/ailand/Pictures/daheng/" + loop_t + ".jpg", images[0])
-					ftp_inited = False
-					sql_inited = set_value(mydb, sql_inited, 'daheng_camera', 'capture', '1')
-				
-					if debug:
-						print(traceback.format_exc())
+						if debug:
+							print(traceback.format_exc())
 				
 	except:
 		print(traceback.format_exc())
