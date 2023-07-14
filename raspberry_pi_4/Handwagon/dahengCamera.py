@@ -106,7 +106,7 @@ while True:
 				cams[0].LineSelector.set(1)
 				cams[0].LineMode.set(1)
 				cams[0].LineInverter.set(False)
-				cams[0].LineSource.set(2)
+				cams[0].LineSource.set(1)
 				cams[0].UserOutputSelector.set(1)
 				
 				cam_stream_on(cams)
@@ -172,9 +172,7 @@ while True:
 				
 				try:
 					sql_inited, cam_inited = daheng_calibration(sql_inited, cam_inited)	
-					cams[0].UserOutputValue.set(True)
 					images = get_numpyImageBGR(cams)
-					cams[0].UserOutputValue.set(False)
 					
 					# camera logging info
 					cam_expo = cams[0].ExposureTime.get()
