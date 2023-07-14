@@ -154,7 +154,6 @@ while True:
 				try:
 								
 					cams[0].UserOutputValue.set(False)
-					cams[0].TriggerSoftware.send_command()
 					images = get_numpyImageBGR(cams)
 					
 					cv2.imshow("preview", images[0])
@@ -173,7 +172,7 @@ while True:
 				
 				try:
 					sql_inited, cam_inited = daheng_calibration(sql_inited, cam_inited)
-					cams[0].TriggerSoftware.set(True)	
+					cams[0].TriggerSoftware.send_command()
 					images = get_numpyImageBGR(cams)
 					
 					# camera logging info
