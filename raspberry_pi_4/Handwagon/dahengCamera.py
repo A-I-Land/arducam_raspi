@@ -102,15 +102,14 @@ while True:
 				init_cam(cams, daheng[0], 24, [0, 0, 0])
 				cams[0].GainAuto.set(2)
 				cams[0].BalanceWhiteAuto.set(2)
-				cams[0].TriggerMode.set(0)
+				cams[0].TriggerMode.set(1)
+				cams[0].TriggerSource.set(0)
 				cams[0].LineSelector.set(1)
 				cams[0].LineMode.set(1)
 				cams[0].LineInverter.set(False)
 				cams[0].LineSource.set(1)
 				cams[0].UserOutputSelector.set(1)
 				
-				cam_stream_on(cams)
-
 				if debug:
 					cv2.namedWindow("preview", cv2.WINDOW_NORMAL)
 					cv2.resizeWindow("preview", 500, 300)
@@ -171,7 +170,8 @@ while True:
 			if cam_inited and ftp_enable and ftp_inited and control[0] and not daheng[3]:
 				
 				try:
-					sql_inited, cam_inited = daheng_calibration(sql_inited, cam_inited)	
+					sql_inited, cam_inited = daheng_calibration(sql_inited, cam_inited)
+					cams[0].TriggerSoftware.set(True)	
 					images = get_numpyImageBGR(cams)
 					
 					# camera logging info
