@@ -30,7 +30,7 @@ def daheng_calibration(sql_inited, cam_inited, verbose=False):
 		
 		print(loop_t + ": Starting calibration for daheng")
 		
-		cams[0].UserOutputValue.set(True)
+		# cams[0].UserOutputValue.set(True)
 		cams[0].GainAuto.set(2)
 		cams[0].BalanceWhiteAuto.set(2)
 		cams[0].TriggerMode.set(0)
@@ -40,7 +40,7 @@ def daheng_calibration(sql_inited, cam_inited, verbose=False):
 			images = get_numpyImageBGR(cams)
 			
 			if cams[0].GainAuto.get()[0] == 0 and cams[0].BalanceWhiteAuto.get()[0] == 0:
-				cams[0].UserOutputValue.set(False)
+				# cams[0].UserOutputValue.set(False)
 				sql_inited = set_value(mydb, sql_inited, 'control', 'do_calibration', '0')
 				print(loop_t,  ": Daheng calibration completed")
 				
@@ -109,6 +109,7 @@ while True:
 				cams[0].LineInverter.set(False)
 				cams[0].LineSource.set(1)
 				cams[0].UserOutputSelector.set(1)
+				cams[0].stream_on()
 				
 				if debug:
 					cv2.namedWindow("preview", cv2.WINDOW_NORMAL)
@@ -153,6 +154,7 @@ while True:
 				try:
 								
 					cams[0].UserOutputValue.set(False)
+					cams[0].TriggerSoftware.send_command()
 					images = get_numpyImageBGR(cams)
 					
 					cv2.imshow("preview", images[0])
