@@ -1,0 +1,51 @@
+{
+    "Status": [
+        {
+            "Status": false
+        }
+    ],
+    "Data": [
+        {
+            "ImageNames": [
+                "output/2023-07-14_13-50-38_139105__11_Gerste_Kamera2",
+                "output/2023-07-14_13-50-44_341562__11_Gerste_Kamera2"
+            ],
+            "ImageData": [
+                "'Exposure: 240.0; Gain: 24.0; WB: 1.0 1.0 1.0'",
+                "'Exposure: 240.0; Gain: 24.0; WB: 1.0 1.0 1.0'"
+            ],
+            "GPSLat": [
+                0.0,
+                0.0
+            ],
+            "GPSLng": [
+                0.0,
+                0.0
+            ]
+        }
+    ],
+    "Settings": [
+        {
+            "Setting": [
+                "manuell",
+                "1 sek.",
+                "240",
+                ""
+            ]
+        }
+    ],
+    "Dataset": [
+        {
+            "Dataset": [
+                "Gerste",
+                "bew\u00f6lkt",
+                "11",
+                "trocken",
+                "13",
+                "rtg",
+                "",
+                ""
+            ]
+        }
+    ]
+}

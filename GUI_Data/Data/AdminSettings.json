@@ -1,0 +1,14 @@
+{
+    "Einstellungen": [
+        {
+            "Language": "Deutsch",
+            "Device": "Handger\u00e4t 1",
+            "Sensorbox": "Sensorbox 1",
+            "Upload": "Mobile Daten",
+            "CamStatus1": "ON",
+            "CamStatus2": "ON",
+            "MaxImages": "5",
+            "Server": "QA"
+        }
+    ]
+}

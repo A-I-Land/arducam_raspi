@@ -1,0 +1,10 @@
+{
+    "Einstellungen": [
+        {
+            "Trigger": "manuell",
+            "Interval": "1 sek.",
+            "ExposTime1": "240",
+            "ExposTime2": ""
+        }
+    ]
+}

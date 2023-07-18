@@ -1,0 +1,3 @@
+{
+    "files": ["UploadWindow.py","camera.py","zoom.py","data.py","DataRecovery.py","sendEmail.py","settings.py","PinCode.py","gui.py","ErrorWindow.py","InfoWindow.py","log.py"]
+}
