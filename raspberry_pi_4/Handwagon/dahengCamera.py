@@ -30,19 +30,18 @@ def daheng_calibration(sql_inited, cam_inited, verbose=False):
 		
 		print(loop_t + ": Starting calibration for daheng")
 		
-		cams[0].UserOutputValue.set(True)
+		cams[0].TriggerMode.set(0) # Set back to non-trigger acquisition
 		cams[0].GainAuto.set(2)
 		cams[0].BalanceWhiteAuto.set(2)
-		cams[0].TriggerMode.set(0)
-					
+				
 		while True:
 			
 			images = get_numpyImageBGR(cams)
 			
 			if cams[0].GainAuto.get()[0] == 0 and cams[0].BalanceWhiteAuto.get()[0] == 0:
-				cams[0].UserOutputValue.set(False)
 				sql_inited = set_value(mydb, sql_inited, 'control', 'do_calibration', '0')
 				print(loop_t,  ": Daheng calibration completed")
+				cams[0].TriggerMode.set(1) # Set back to trigger acquisition
 				
 				# get required information for logging
 				cam_gain = cams[0].Gain.get()
@@ -102,15 +101,15 @@ while True:
 				init_cam(cams, daheng[0], 24, [0, 0, 0])
 				cams[0].GainAuto.set(2)
 				cams[0].BalanceWhiteAuto.set(2)
-				cams[0].TriggerMode.set(0)
+				cams[0].TriggerMode.set(1) # set trigger mode to one
+				cams[0].TriggerSource.set(0) # set trigger source to software
 				cams[0].LineSelector.set(1)
 				cams[0].LineMode.set(1)
 				cams[0].LineInverter.set(False)
-				cams[0].LineSource.set(2)
+				cams[0].LineSource.set(1)
 				cams[0].UserOutputSelector.set(1)
+				cams[0].stream_on()
 				
-				cam_stream_on(cams)
-
 				if debug:
 					cv2.namedWindow("preview", cv2.WINDOW_NORMAL)
 					cv2.resizeWindow("preview", 500, 300)
@@ -171,10 +170,9 @@ while True:
 			if cam_inited and ftp_enable and ftp_inited and control[0] and not daheng[3]:
 				
 				try:
-					sql_inited, cam_inited = daheng_calibration(sql_inited, cam_inited)	
-					cams[0].UserOutputValue.set(True)
+					sql_inited, cam_inited = daheng_calibration(sql_inited, cam_inited)
+					cams[0].TriggerSoftware.send_command()
 					images = get_numpyImageBGR(cams)
-					cams[0].UserOutputValue.set(False)
 					
 					# camera logging info
 					cam_expo = cams[0].ExposureTime.get()
