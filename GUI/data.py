@@ -1,12 +1,14 @@
 import json
 import os
 import subprocess
-import mysql.connector
 from log import *
+from database import *
+from upload import *
 from datetime import datetime
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
+from func_timeout import func_timeout, FunctionTimedOut
 
 lightEn = {
     "sonnig": "sunny",
@@ -281,89 +283,6 @@ def readDatasetNum():
 
         return num, images, date
 
-def addDatabaseDataset(value):
-    """
-    Setzt den übergebenen Wert in der mysql Tabelle
-    """
-    #print(text)
-    try:
-        mydb = mysql.connector.connect(
-          host="localhost",
-          user="ailand",
-          password="etarob",
-          database="handwagen"
-        )
-
-        text = "INSERT INTO Datasets VALUES (\"" + value[0] + "\",\"" + value[2] + "\",\"" + value[3] + \
-            "\",\"" + value[4] + "\",\"" + value[5] + "\",\"" + value[6] + "\",\"\",\"\",\"\");"
-
-        mycursur = mydb.cursor()
-        mycursur.execute(text)
-
-        mydb.commit()
-    except Exception as e:
-        eMessage = "Saving Dataset to Database failed \n" + str(e)
-        print(eMessage)
-        writeLog("Error", eMessage)
-
-def changeDatabaseDataset(column, value, type, id):
-    """
-    Setzt den übergebenen Wert in der mysql Tabelle
-    """
-    try:
-        mydb = mysql.connector.connect(
-          host="localhost",
-          user="ailand",
-          password="etarob",
-          database="handwagen"
-        )
-        valueText = ""
-        if type == "array":
-            for i in value:
-                valueText = valueText + i + " "
-        else:
-            valueText = value
-        mycursur = mydb.cursor()
-        mycursur.execute("UPDATE Datasets SET " + column + " = '" + valueText + "' WHERE Time = \"" + id + "\"")
-
-        mydb.commit()
-    except Exception as e:
-        eMessage = "Changing Datasat Data in Database failed \n" + str(e)
-        print(eMessage)
-        writeLog("Error", eMessage)
-
-def deleteDatabaseDataset(id):
-    """
-    Setzt den übergebenen Wert in der mysql Tabelle
-    """
-    #print(text)
-    try:
-        mydb = mysql.connector.connect(
-          host="localhost",
-          user="ailand",
-          password="etarob",
-          database="handwagen"
-        )
-
-        mycursur = mydb.cursor()
-        mycursur.execute("DELETE  FROM Datasets WHERE Time = \"" + id + "\"")
-
-        mydb.commit()
-    except Exception as e:
-        eMessage = "Deleting Dataset Data from Database failed \n" + str(e)
-        print(eMessage)
-        writeLog("Error", eMessage)
-
-def getcheckBox():
-    """
-    Checkbox für Tabelle wird erstellt und zurückgegeben
-    """
-
-    chkBoxSelection = QTableWidgetItem()
-    chkBoxSelection.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-    chkBoxSelection.setCheckState(Qt.Unchecked)
-
-    return chkBoxSelection
 
 def deleteOldDatasets(data):
 
@@ -415,87 +334,8 @@ def deleteOldDatasets(data):
         num = num + 1
     #writeDatasetData(data)
 
-def readDatasetData():
-    """
-    Datensatz Informationen werden aus einer json Datei gelesen und zurückgegeben
-    """
-
-    datasets = []
-
-    try:
-        mydb = mysql.connector.connect(
-          host="localhost",
-          user="ailand",
-          password="etarob",
-          database="handwagen"
-        )
-
-        mycursur = mydb.cursor()
-        mycursur.execute("SELECT * FROM Datasets")
-
-        myresult = mycursur.fetchall()
-        mydb.commit()
-        #print("Database: " + str(myresult))
-
-        for x in myresult:
-            #print("len: " + str(len(x)))
-            text = str(x[7])
-            imageNames = []
-            iNames = text.split(" ")
-            for j in iNames:
-                if j != "":
-                    imageNames.append(j)
-            #print("imageNames: " + str(imageNames))
-            text2 = str(x[8])
-            uploadImages = []
-            uNames = text2.split(" ")
-            for y in uNames:
-                if y != "":
-                    uploadImages.append(y)
-            #print("uploadImages: " + str(uploadImages))
-            dataset = [ x[0], "", x[1], x[2], x[3], x[4], x[5], x[6], getcheckBox(), imageNames, uploadImages]
-            #print("dataset:" + str(dataset))
-            datasets.append(dataset)
 
 
-    except Exception as e:
-        eMessage = "Getting Database Data failed \n" + str(e)
-        print(eMessage)
-        writeLog("Error", eMessage)
-    """
-    with open('/home/ailand/GUI/Data/Datasets.json', 'r') as openfile:
-
-        # Reading from json file
-        json_object = json.load(openfile)
-        for i in json_object['Datensatz']:
-            imageNames = []
-            uploadImages = []
-            for j in i["Images"]:
-                imageNames.append(j)
-            for k in i["UploadImages"]:
-                uploadImages.append(k)
-            lenNames = len(imageNames)
-            lenUpload = len(uploadImages)
-            if lenUpload == 0:
-                uploadStatus = "vollständig"
-            elif lenUpload < lenNames:
-                uploadStatus = "unvollständig"
-            else:
-                uploadStatus = "fehlgeschlagen"
-
-            dataset = [ i['Time'], i['Business'], i['Cultivation'], i['BBCH'], i['Light'], i['Ground'], i['ImageNum'], uploadStatus, getcheckBox(), imageNames, uploadImages]
-            datasets.append(dataset)
-    """
-    return datasets
-
-"""
-def readData():
-    with open("data.json", "r") as myfile:
-        data=myfile.read()
-
-    obj = json.loads(data)
-    return obj
-"""
 
 def makeJsonData(data, time, imageData, server):
     """
@@ -923,12 +763,7 @@ def dataUpload(dataNames, datasets, table, row, labelUpload, buttonUpload, selec
     """
     Übergebene Bildere und Json Dateien werden hochgeladen und eine Rückmeldung zurückgegeben
     """
-    #while uploadStatus:
-        #time.sleep(1)
-        #print(uploadStatus)
-    #uploadStatus = True
-    output = ""
-    out = ""
+    
     numSucess = 0
     numError = 0
     result = ""
@@ -937,50 +772,35 @@ def dataUpload(dataNames, datasets, table, row, labelUpload, buttonUpload, selec
     uploadNum = 0
     uploadMaxNum = len(dataNames)
     labelUpload.setText(uploadText + " " + str(uploadNum) + "/" + str(uploadMaxNum))
+    uploadNum = uploadNum + 1
     #print("server: " + server)
     if server == "QA":
-        uploadFile = "ingestionQa.sh "
+        uploadServer = "qa"
     else:
-        uploadFile = "ingestionProd.sh "
-    #print(uploadFile)
+        uploadServer = "prod"
     for i in dataNames:
-        imageResult = "fehlgeschlagen"
-        textUpload = Path_Upload_Skript + uploadFile + i
-        try:
-            proc = subprocess.Popen([textUpload], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
-            (out, err) = proc.communicate()
-        except Exception as e:
-            eMessage = "Upload File could not be executed \n" + str(e)
-            print(eMessage)
-            writeLog("Error", eMessage)
-        textOut = str(out)
-        text = textOut.split("HTTP")
-        if len(text) >= 4:
-            httpText = text[3].split(" ")
-            if len(httpText) >= 2:
-                result = httpText[1]
-                if result == "200":
-                    numSucess = numSucess + 1
-                    imageResult = "erfolgreich"
-                else:
-                    numError = numError + 1
-                    failedImages.append(i)
+        status = readDatabaseImageStatus(i)
+        if status == "notUploaded":
+            imageResult = "fehlgeschlagen"
+            try:
+                uploadResult = func_timeout(30,imageUpload, args=(uploadServer, i)) 
+            except FunctionTimedOut as e:
+                eMessage = "Uploading Image failed Upload took longer than 30 seconds \n" + str(e)
+                print(eMessage)
+                writeLog("Error", eMessage)
+                uploadResult = False
+            if uploadResult:
+                numSucess = numSucess + 1
+                imageResult = "erfolgreich"
             else:
                 numError = numError + 1
                 failedImages.append(i)
-        else:
-            numError = numError + 1
-            failedImages.append(i)
-        output = output + str(out) + "\n" + result + "\n"
-        uploadNum = uploadNum + 1
+            print("Bild hochladen: " + imageResult + " " + str(uploadNum) + "/" + str(uploadMaxNum))
+            #print("NumS:" + str(numSucess))
+            #print("NumE:" + str(numError))
         labelUpload.setText(uploadText + " " + str(uploadNum) + "/" + str(uploadMaxNum))
-        #uploadWindow.addText("Bild hochladen: " + imageResult + " " + str(uploadNum) + "/" + str(uploadMaxNum))
-        print("Bild hochladen: " + imageResult + " " + str(uploadNum) + "/" + str(uploadMaxNum))
-        #print("NumS:" + str(numSucess))
-        #print("NumE:" + str(numError))
+        uploadNum = uploadNum + 1
     if numSucess == 0:
-        #print("Num:" + str(numError))
-        #print("Upload Failed")
         if incomplete:
             result = "unvollständig"
             color = getTableItemColor("unvollständig")
@@ -988,11 +808,9 @@ def dataUpload(dataNames, datasets, table, row, labelUpload, buttonUpload, selec
             result = "fehlgeschlagen"
             color = getTableItemColor("fehlgeschlagen")
     elif numSucess != 0 and numError != 0:
-        #print("Upload Sucess Partly")
         result = "unvollständig"
         color = getTableItemColor("unvollständig")
     elif numSucess != 0 and numError == 0:
-        #print("Upload Sucess")
         result = "vollständig"
         color = getTableItemColor("vollständig")
     #print(str(out))
@@ -1005,17 +823,14 @@ def dataUpload(dataNames, datasets, table, row, labelUpload, buttonUpload, selec
     id = datasets[datasetNum][0]
     changeDatabaseDataset("Upload", result, "text", id)
     changeDatabaseDataset("UploadImages", failedImages, "array", id)
-    #uploadWindow.addText("Upload Dataset finished Result: " + result)
     print("Upload Dataset finished Result: " + result)
-    #writeDatasetData(datasets)
     labelUpload.setText(uploadText)
     logText = "Dataset: " + str(datasets[datasetNum][0]) + " Result: " + result
     writeLog("upload", logText)
     if selected == False:
         buttonUpload.setEnabled(True)
         #buttonUpload.setStyleSheet("background-color: green; height: 100")
-    #uploadStatus = False
-    #print(output)
+    
     return result
 
 

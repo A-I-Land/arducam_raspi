@@ -3,11 +3,12 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from log import *
 import ssl
 import smtplib
 
+PW_Path = "/home/ailand/GUI_Data/Data/emailPW"
 email_sender = "ailandtest40@gmail.com"
-email_password = "jnnjdztkmvsqokez"
 #email_receiver = "kuehnast@a-i.land"
 
 def emailTextonly(receiver, subject, text):
@@ -15,6 +16,13 @@ def emailTextonly(receiver, subject, text):
     subject = subject
     body  = text
     email_receiver = receiver
+    
+    try:
+        email_password = readPassword()
+    except Exception as e:
+        eMessage = "Getting E-Mail Passwort failed \n" + str(e)
+        print(eMessage)
+        writeLog("Error", eMessage)
 
     em = MIMEMultipart()
     em['From'] = email_sender
@@ -37,6 +45,13 @@ def emailWithFile(receiver, subject, text, file):
     subject = subject
     body  = text
     email_receiver = receiver
+
+    try:
+        email_password = readPassword()
+    except Exception as e:
+        eMessage = "Getting E-Mail Passwort failed \n" + str(e)
+        print(eMessage)
+        writeLog("Error", eMessage)
 
     em = MIMEMultipart()
     em['From'] = email_sender
@@ -75,3 +90,10 @@ def emailWithFile(receiver, subject, text, file):
     with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
         smtp.login(email_sender, email_password)
         smtp.sendmail(email_sender, email_receiver, em.as_string())
+
+
+def readPassword():
+
+    f = open(PW_Path, "r")
+
+    return str(f.read())
