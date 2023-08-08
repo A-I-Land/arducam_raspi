@@ -2,6 +2,7 @@ import sys
 import cv2
 import imutils
 import webbrowser
+import mysql.connector
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
@@ -13,6 +14,7 @@ from time import time
 from camera import *
 from data import *
 from log import *
+from database import *
 from settings import *
 from sendEmail import *
 from DataRecovery import *
@@ -48,13 +50,14 @@ INFESTATION = ["", "Distelnest", "starke Verunkrautung", "keine Verunkrautung"]
 Growth_Height_Default = "1"
 Image_Max_Deafault = 5
 Exposure_Time_Default = 240
-GUI_Version = "Version: 2.1.4"
+GUI_Version = "Version: 2.1.6"
 Email_Receiver_Logs = "kuehnast@a-i.land"
 Email_Receiver_DataNum = "kuehnast@a-i.land"
 #PIN = 1234
 
 Path_GUI_Icon = "/home/ailand/GUI_Data/plant.png"
 Path_Daheng_Preview = "/home/ailand/daheng/preview.jpg"
+Path_Log_Files = "/home/ailand/GUI_Data/logs/"
 Path_Images = "GUI_Data/"
 
 
@@ -163,6 +166,7 @@ class test(QWidget):
       self.imagesNum = 0
       self.datasetsDate = None
       self.GuiOn = True
+      self.imagesBlurred = False
 
       self.uploadWindow = None
       #self.uploadWindow.setErrorMessage("test")
@@ -1302,9 +1306,13 @@ class test(QWidget):
         self.Stack.setCurrentIndex(i)
 
     def show_new_window(self):
-            #if self.infoWindow is None:
-            self.infoWindow = InfoWindow()
-            self.infoWindow.show()
+            try:
+                self.infoWindow = InfoWindow()
+                self.infoWindow.show()
+            except Exception as e:
+                eMessage = "Displaying Info Window failed \n" + str(e)
+                print(eMessage)
+                writeLog("Error", eMessage)
 
     def pageChanged(self):
         try:
@@ -1777,10 +1785,9 @@ class test(QWidget):
     def endCalib(self):
 
         try:
+            #print(self.imagesBlurred)
             self.labelCalibStart1.setText("")
             self.labelCalibCam1.setText("")
-            #self.triggerImage(True)
-            #self.addNewDataset()
         except Exception as e:
             eMessage = "Failed to Finish Calibration \n" + str(e)
             print(eMessage)
@@ -1854,8 +1861,9 @@ class test(QWidget):
             if self.comboBoxTrigger.currentText() == "manuell":
                 loopEnd = 0
                 self.labelCountdown.setHidden(True)
-                #lng = 53.554116791962024
-                #lat = 9.980052438466691
+                lng = 0
+                lat = 0
+                """
                 try:
                    lng, lat = func_timeout(2,getGPSData, args=())
                 except:
@@ -1864,14 +1872,17 @@ class test(QWidget):
                     writeLog("Error", eMessage)
                     lng = 0
                     lat = 0
+                """
 
                 self.GPSLng.append(lng)
                 self.GPSLat.append(lat)
 
                 try:
                     self.imageNames, self.imageData = make_Image(self.cams, self.labelPicturesNum, self.labelImage, self.labelImage2, self.imageNames, imgInfo, self.cameraStatus, self.imageData, self.tableDatasets, self.datasets)
+                    #print("time4")
                     self.writeDataset()
                     writeRecoveryDataset(True, self.imageNames, self.imageData, self.GPSLat, self.GPSLng, self.settingsCamera, self.settingsDataset)
+                    #print("time5")
                 except Exception as e:
                     eMessage = "Image Making failed (Manuell) \n" + str(e)
                     print(eMessage)
@@ -1890,12 +1901,15 @@ class test(QWidget):
                 self.labelCountdown.setHidden(False)
                 t = Timer(0.5, self.make_Images, args=(loopEnd, int(sek[0]), imgInfo))
                 t.start()
+            #print("time6")
             self.checkImage()
+            #print("time7")
         except Exception as e:
             eMessage = "Image Making failed \n" + str(e)
             print(eMessage)
             writeLog("Error", eMessage)
 
+        #print("time8")
         return None
 
     def checkImage(self):
@@ -1906,7 +1920,9 @@ class test(QWidget):
                 blurry = ckeckImagesharpness(img, 100)
                 #print(str(blurry))
                 if blurry:
-                    self.show_new_window()
+                    #self.show_new_window()
+                    self.imagesBlurred = True
+            #print(self.imagesBlurred)
         except Exception as e:
             eMessage = "Checking  Image sharpness failed \n" + str(e)
             print(eMessage)
@@ -2006,6 +2022,7 @@ class test(QWidget):
         self.Stack.setCurrentIndex(0)
         self.setRecordingStatus(False)
         try:
+            self.imagesBlurred = False
             datasetNum = len(self.datasets) - 1
             deleteDatabaseDataset(self.datasets[datasetNum][0])
             self.datasets.pop()
@@ -2115,6 +2132,7 @@ class test(QWidget):
             writeLog("Error", eMessage)
             self.autoImages = False
 
+        print("time6")
         return None
 
 
@@ -2158,6 +2176,7 @@ class test(QWidget):
             self.GPSLat = []
             self.GPSLng = []
             self.uploadResponse = ""
+            self.imagesBlurred = False
             changeRecoveryDataset("status", False)
 
             if self.autoImages:
@@ -2194,40 +2213,24 @@ class test(QWidget):
         """
         Ausgewählter Datensatz wird Hochgeladen
         """
-        #self.uploadWindow.show()
-        #self.errorWindow.setErrorMessage("Upload")
-        #self.uploadWindow.addText("Starten des Uploads")
+
         try:
             self.buttonUpload.setEnabled(False)
             #self.buttonUpload.setStyleSheet("background-color: grey; height: 100; color: white")
             tableRow = 0
             tableRowNum = len(self.datasets) - 1
             dataset = len(self.datasets) - 1
-            #self.labelBattery.setText("Uploading")
             while tableRow <= tableRowNum:
                 if self.tableDatasets.item(tableRow,7).checkState() == Qt.Checked:
                     self.labelNoticeUpload.show()
-                    #self.uploadWindow.addText("Upload Datensatz: " + self.datasets[dataset][0])
                     print("Upload Datensatz: " + self.datasets[dataset][0])
-                    #self.uploadStatus = True
-                    #self.uploadResponse = dataUpload(self.datasets[dataset][9], self.datasets, self.tableDatasets, tableRow, self.labelNoticeUpload)
-                    #t = Timer(1.0, dataUpload, args=(self.datasets[dataset][9], self.datasets, self.tableDatasets, tableRow, self.labelNoticeUpload, self.buttonUpload, True))
-                    #t.start()
-                    if self.tableDatasets.item(tableRow, 6).text() == "unvollständig":
-                        dataUpload(self.datasets[dataset][10], self.datasets, self.tableDatasets, tableRow, self.labelNoticeUpload, self.buttonUpload, True, True, self.settingAdmin[7])
-                    else:
-                        dataUpload(self.datasets[dataset][9], self.datasets, self.tableDatasets, tableRow, self.labelNoticeUpload, self.buttonUpload, True, False, self.settingAdmin[7])
-                    #self.datasets[dataset][7] = self.uploadResponse
+                    dataUpload(self.datasets[dataset][9], self.datasets, self.tableDatasets, tableRow, self.labelNoticeUpload, self.buttonUpload, True, False, self.settingAdmin[7])
                     self.tableDatasets.item(tableRow,7).setCheckState(Qt.Unchecked)
-                    #while self.uploadStatus:
-                        #print(self.uploadStatus)
-                        #time.sleep(1)
                 tableRow = tableRow + 1
                 dataset = dataset - 1
             self.buttonDeleteST.setEnabled(True)
             self.checkBoxUploadedNum = 0
             self.checkBoxCheckedNum = 0
-            #writeDatasetData(self.datasets)
         except Exception as e:
             eMessage = "Uploading selected Dataset failed \n" + str(e)
             print(eMessage)
@@ -2334,6 +2337,8 @@ class test(QWidget):
             if int(num[0]) < int(num[1]):
                 self.labelNotice.show()
                 self.labelNotice.setText("!Hinweis! Datensatz nicht \n vollständig: (Bilder:" + textNum[1] + ")")
+            if self.imagesBlurred:
+                self.show_new_window()
         except Exception as e:
             eMessage = "Finish Image making failed \n" + str(e)
             print(eMessage)
@@ -2451,7 +2456,7 @@ class test(QWidget):
             while tableRow <= tableRowNum:
                 if self.tableLogs.item(tableRow,2).checkState() == Qt.Checked:
                     filename = self.tableLogs.item(tableRow, 1).text()
-                    file = "/home/ailand/GUI/logs/" + filename
+                    file = Path_Log_Files + filename
                     text = "Sending LogFile " + filename + "\n" + self.comboBoxDevice.currentText() + " " + self.comboBoxSensor.currentText()
                     subject = "Sending Logfile"
                     print(file)
@@ -2471,14 +2476,25 @@ class test(QWidget):
         eSuccess = True
         print("Sending E-Mail")
         try:
+            deviceText = self.comboBoxDevice.currentText().split(" ")
+            if len(deviceText) >= 2:
+                deviceNum = deviceText[1] 
+            else:
+                deviceNum = ""
+            sensorText = self.comboBoxSensor.currentText().split(" ")
+            if len(sensorText) >= 2:
+                sensorNum = sensorText[1]
+            else:
+                sensorNum = ""
             eSubject = "Datensatz Zählung Handwagen (Automatisch)"
-            eText = "Anzahl der erstellten Datenätze und aufgenommenen Bilder.\n\n" \
-                    + "Zeitraum:                " + self.datasetsDate + " - " + (datetime.now()).strftime('%a. %b %d %X %Y') + "\n" \
-                    + "Handgerät:              " + self.comboBoxDevice.currentText() + "\n" \
-                    + "Sensorbox:              " + self.comboBoxSensor.currentText() + "\n" \
-                    + "Anzahl Datensätze: " + str(self.datasetNum) + "\n" \
-                    + "Anzahl Bilder:          " + str(self.imagesNum)
-
+            eText = "Anzahl der erstellten Datensätze und aufgenommenen Bilder.\n\n" \
+                    + "Zeitraum:                  " + self.datasetsDate + " - " + (datetime.now()).strftime('%a. %b %d %X %Y') + "\n" \
+                    + "Handgerät:               " + deviceNum + "\n" \
+                    + "Sensorbox:               " + sensorNum + "\n" \
+                    + "Anzahl Datensätze:  " + str(self.datasetNum) + "\n" \
+                    + "Anzahl Bilder:           " + str(self.imagesNum)
+            
+        
             emailTextonly(Email_Receiver_DataNum, eSubject, eText)
         except Exception as e:
             eSuccess = False

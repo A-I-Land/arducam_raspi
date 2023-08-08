@@ -4,12 +4,12 @@ from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from datetime import datetime
 from cameraSetup import *
+from database import *
 from log import *
 from data import *
 from func_timeout import func_timeout, FunctionTimedOut
 import time
 import qimage2ndarray
-import mysql.connector
 import cv2 # OpenCV
 import sys
 import numpy as np
@@ -83,32 +83,11 @@ def setCameraData(table, setting, value):
         writeLog("Error", eMessage)
         try:
             os.system(Path_Restart_Mysql)
-        except:
+        except Exception as e:
             eMessage = "Restarting SQL failed: try restarting the GUI or the Surface \n" + str(e)
             print(eMessage)
             writeLog("Error", eMessage)
 
-
-def setDatabaseData(table, setting, value):
-    """
-    Setzt den übergebenen Wert in der mysql Tabelle
-    """
-    try:
-        mydb = mysql.connector.connect(
-          host="localhost",
-          user="ailand",
-          password="etarob",
-          database="handwagen"
-        )
-
-        mycursur = mydb.cursor()
-        mycursur.execute("UPDATE " + table + " SET " + setting + " = '" + value + "' WHERE 1")
-
-        mydb.commit()
-    except Exception as e:
-        eMessage = "Saving Data to Database failed \n" + str(e)
-        print(eMessage)
-        writeLog("Error", eMessage)
 
 def getCameraData(table, setting):
     """
@@ -123,131 +102,12 @@ def getCameraData(table, setting):
         value = ""
         try:
             os.system(Path_Restart_Mysql)
-        except:
+        except Exception as e:
             eMessage = "Restarting SQL failed: try restarting the GUI or the Surface \n" + str(e)
             print(eMessage)
             writeLog("Error", eMessage)
 
     return value
-
-def getDatabaseData(table, setting):
-    """
-    Gibt die Informationen der übergebenen mysql Tabelle zurück
-    """
-    try:
-        mydb = mysql.connector.connect(
-          host="localhost",
-          user="ailand",
-          password="etarob",
-          database="handwagen"
-        )
-
-        mycursur = mydb.cursor()
-        mycursur.execute("SELECT " + setting + " FROM " + table)
-
-        myresult = mycursur.fetchall()
-        mydb.commit()
-        for x in myresult:
-            text = str(x)
-            result = text.split(",")
-            result = result[0].split("(")
-        value = result[1]
-    except Exception as e:
-        eMessage = "Getting Database Data failed \n" + str(e)
-        print(eMessage)
-        writeLog("Error", eMessage)
-        value = ""
-
-    return value
-
-def unlockTables(table):
-
-    try:
-        mydb = mysql.connector.connect(
-          host="localhost",
-          user="ailand",
-          password="etarob",
-          database="handwagen"
-        )
-
-        mycursur = mydb.cursor()
-        mycursur.execute("show processlist")
-
-        myresult = mycursur.fetchall()
-        mydb.commit()
-        n = 0
-        for x in myresult:
-            print(x)
-
-            if n == 1:
-                text = str(x)
-                result = text.split("(")
-                result = result[1].split(",")
-                value = result[0]
-                #mycursur.execute("kill " + value)
-                #mydb.commit()
-                print(value)
-            n = n + 1
-
-    except Exception as e:
-        eMessage = "Unlock Database failed \n" + str(e)
-        print(eMessage)
-        writeLog("Error", eMessage)
-        value = ""
-
-    return value
-
-def killProcess(process):
-
-    try:
-        mydb = mysql.connector.connect(
-          host="localhost",
-          user="ailand",
-          password="etarob",
-          database="handwagen"
-        )
-
-        mycursur = mydb.cursor()
-        mycursur.execute("kill " + process)
-
-        #myresult = mycursur.fetchall()
-        mydb.commit()
-        #for x in myresult:
-            #print(x)
-            #text = str(x)
-            #result = text.split(",")
-            #result = result[0].split("(")
-        #value = result[1]
-        #print(value)
-    except Exception as e:
-        eMessage = "Killing Process failed \n" + str(e)
-        print(eMessage)
-        writeLog("Error", eMessage)
-
-def getLockStatus(table):
-
-    try:
-        mydb = mysql.connector.connect(
-          host="localhost",
-          user="ailand",
-          password="etarob",
-          database="handwagen"
-        )
-
-        mycursur = mydb.cursor()
-        mycursur.execute("SHOW OPEN TABLES in handwagen")
-
-        myresult = mycursur.fetchall()
-        mydb.commit()
-        for x in myresult:
-            print(x)
-    except Exception as e:
-        eMessage = "Getting Database Lock Status failed \n" + str(e)
-        print(eMessage)
-        writeLog("Error", eMessage)
-        #value = ""
-
-    #return value
 
 def make_Image(cams, labelNum, labelImage, labelImage2, img_Names, imgInfo, cameraStatus, imgData, tableDatasets, datasetsData):
     """
@@ -257,16 +117,15 @@ def make_Image(cams, labelNum, labelImage, labelImage2, img_Names, imgInfo, came
     textNum = labelNum.text().split(" ")
     num = int(textNum[1])
     output_folder = "output"
-    path = os.getcwd()
     os.makedirs(output_folder, exist_ok=True)
     textField = deleteSpaces(imgInfo[0])
-    dim = (1100, 500)
 
 
     picturePath = datetime.now().strftime('%Y-%m-%d_%H-%M-%S_%f') + "_" +  textField + "_" + imgInfo[1] + "_" + imgInfo[2] + "_" "Kamera2"
     picturename = picturePath + ".jpg"
     setCameraData("control", "image_name", picturename)
     setCameraData("control", "soft_capture", "1")
+    #print("time1 start")
     time.sleep(1)
 
     sec = 0
@@ -277,7 +136,8 @@ def make_Image(cams, labelNum, labelImage, labelImage2, img_Names, imgInfo, came
             img = cv2.imread("/home/ailand/daheng/" + picturename)
             cv2.imwrite(Path_Images + picturename ,img)
             labelNum.setText("Bilder: " + str(num + 1) + " / " + textNum[3])
-            img_Names.append(output_folder + "/" + picturePath)
+            img_Name = output_folder + "/" + picturePath
+            img_Names.append(img_Name)
             updateTable(tableDatasets, 5, str(num + 1) + " / " + textNum[3], datasetsData)
             noSuccess = False
         except Exception as e:
@@ -289,6 +149,7 @@ def make_Image(cams, labelNum, labelImage, labelImage2, img_Names, imgInfo, came
             sec = sec + 1
             time.sleep(1)
 
+    #print("time2")
     try:
         #img = cv2.imread("GUI/output/" + picturename)
         #img = resizeImg(img, (1100,500))
@@ -308,9 +169,10 @@ def make_Image(cams, labelNum, labelImage, labelImage2, img_Names, imgInfo, came
             numdataset = len(datasetsData) - 1
             id = datasetsData[numdataset][0]
             changeDatabaseDataset("Images", img_Names, "array", id)
-            print("Number: " + str(num))
+            #print("Number: " + str(num))
             imageNum = str(num + 1) + " / " + textNum[3]
             changeDatabaseDataset("ImageNum", imageNum, "text", id)
+            addDatabaseImage(img_Name)
 
         except Exception as e:
             eMessage = "Could not save image to Database \n" + str(e)
@@ -321,6 +183,8 @@ def make_Image(cams, labelNum, labelImage, labelImage2, img_Names, imgInfo, came
     imgInfo = getCameraData("daheng_camera", "log_info")
     imgData.append(imgInfo)
     writeLog("imageInfo", imgInfo)
+
+    #print("time3")
 
     return img_Names, imgData
 
