@@ -50,6 +50,7 @@ INFESTATION = ["", "Distelnest", "starke Verunkrautung", "keine Verunkrautung"]
 Growth_Height_Default = "1"
 Image_Max_Deafault = 5
 Exposure_Time_Default = 240
+Dataset_Email_Days = 7
 GUI_Version = "Version: 2.1.6"
 Email_Receiver_Logs = "kuehnast@a-i.land"
 Email_Receiver_DataNum = "kuehnast@a-i.land"
@@ -267,7 +268,7 @@ class test(QWidget):
       self.enteredASettings = False
       self.fokusImage = None
 
-      if timeNow.days > 5:
+      if timeNow.days >= Dataset_Email_Days:
           tEmail = Timer(0, self.sendDatasetNum, args=())
           tEmail.start()
 
