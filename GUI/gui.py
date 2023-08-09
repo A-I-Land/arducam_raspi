@@ -268,11 +268,6 @@ class test(QWidget):
       self.enteredASettings = False
       self.fokusImage = None
 
-      if timeNow.days >= Dataset_Email_Days:
-          tEmail = Timer(0, self.sendDatasetNum, args=())
-          tEmail.start()
-
-
       t = Timer(1.0, self.updateTime, args=())
       t.start()
       tTrigger = Timer(0.5, self.getTrigger, args=())
@@ -321,6 +316,11 @@ class test(QWidget):
 
       self.setAdminSettings()
       self.setCameraSettings()
+
+      if timeNow.days >= Dataset_Email_Days:
+        tEmail = Timer(0, self.sendDatasetNum, args=())
+        tEmail.start()
+
       self.setLayout(hbox)
       self.setGeometry(100, 60, 800,500)
       #self.setWindowTitle('StackedWidget demo')
