@@ -31,7 +31,7 @@ def daheng_calibration(sql_inited, cam_inited, verbose=False):
 		print(loop_t + ": Starting calibration for daheng")
 		
 		cams[0].TriggerMode.set(0) # Set back to non-trigger acquisition
-		cams[0].GainAuto.set(2)
+		#cams[0].GainAuto.set(2)
 		cams[0].BalanceWhiteAuto.set(2)
 				
 		while True:
@@ -98,8 +98,8 @@ while True:
 				device_manager = get_deviceManagerGX()
 				cams = []
 				cams = get_cams_byIndex(device_manager, cams)
-				init_cam(cams, daheng[0], 24, [0, 0, 0])
-				cams[0].GainAuto.set(2)
+				init_cam(cams, daheng[0], 0, [0, 0, 0])
+				#cams[0].GainAuto.set(2)
 				cams[0].BalanceWhiteAuto.set(2)
 				cams[0].TriggerMode.set(1) # set trigger mode to one
 				cams[0].TriggerSource.set(0) # set trigger source to software

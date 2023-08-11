@@ -40,7 +40,7 @@ def get_cams_bySerial(device_manager, cams, cams_sn):
     return cams
 
 
-def init_cam(cams, exposure=0, gain=0, white=[0, 0, 0]):
+def init_cam(cams, exposure=None, gain=None, white=None):
     # should be simplified via call to an external setup file, which should be accessible/changeable via a GUI cf. todo
     """
     Initialize camera(s)
@@ -56,7 +56,7 @@ def init_cam(cams, exposure=0, gain=0, white=[0, 0, 0]):
         cam.DeviceLinkThroughputLimitMode.set(gx.GxSwitchEntry.OFF)
         # white balance
         if cam.PixelColorFilter.is_implemented():
-            if white == [0, 0, 0]:
+            if white == None:
                 cam.BalanceWhiteAuto.set(gx.GxAutoEntry.CONTINUOUS)
             else:  # needs to be determined for every camera according to light conditions, should only be used with controlled lighting
                 # select RGB channel to set balance 0=R 1=G 2=B
@@ -68,13 +68,13 @@ def init_cam(cams, exposure=0, gain=0, white=[0, 0, 0]):
                 cam.BalanceRatioSelector.set(2)
                 cam.BalanceRatio.set(white[2])
         # set gain
-        if gain == 0:
+        if gain == None:
             cam.GainAuto.set(gx.GxAutoEntry.CONTINUOUS)
         else:
             cam.GainAuto.set(gx.GxAutoEntry.OFF)
             cam.Gain.set(gain)
         # set exposure
-        if exposure == 0:
+        if exposure == None:
             cam.AutoExposureTimeMin.set(2000)
             cam.AutoExposureTimeMax.set(2000)
             cam.ExposureAuto.set(gx.GxAutoEntry.CONTINUOUS)
